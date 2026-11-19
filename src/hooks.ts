@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useReducer, useRef } from "react";
 import { initialState, reducer, type TimerState } from "./lib/timer";
 import { loadSettings, saveSettings, type Settings } from "./lib/settings";
+export { useTheme } from "./lib/theme";
 
 const TICK_MS = 250;
 
