@@ -1,0 +1,19 @@
+name: Copilot setup steps
+on:
+  workflow_dispatch:
+  push:
+    paths: [.github/workflows/copilot-setup-steps.yml]
+  pull_request:
+    paths: [.github/workflows/copilot-setup-steps.yml]
+jobs:
+  copilot-setup-steps:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+      # TODO: install language toolchain and dependencies
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - run: npx playwright install --with-deps chromium
