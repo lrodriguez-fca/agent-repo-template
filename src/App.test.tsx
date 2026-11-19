@@ -5,6 +5,7 @@ import { RouterProvider } from "react-router/dom";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { routes } from "./routes";
 import { STORAGE_KEY } from "./lib/settings";
+import { THEME_STORAGE_KEY } from "./lib/theme";
 import { playAlert } from "./lib/sound";
 
 vi.mock("./lib/sound", () => ({ playAlert: vi.fn(), primeAudio: vi.fn() }));
@@ -34,6 +35,31 @@ function useShortSessions(over: Record<string, number> = {}) {
     STORAGE_KEY,
     JSON.stringify({ focusMin: 1, shortBreakMin: 1, longBreakMin: 1, longBreakEvery: 4, ...over }),
   );
+}
+
+function mockColorScheme(dark: boolean) {
+  const listeners = new Set<(event: MediaQueryListEvent) => void>();
+  let matches = dark;
+  const media = {
+    get matches() {
+      return matches;
+    },
+    media: "(prefers-color-scheme: dark)",
+    onchange: null,
+    addEventListener: (_type: string, listener: EventListenerOrEventListenerObject) => {
+      listeners.add(listener as (event: MediaQueryListEvent) => void);
+    },
+    removeEventListener: (_type: string, listener: EventListenerOrEventListenerObject) => {
+      listeners.delete(listener as (event: MediaQueryListEvent) => void);
+    },
+    setDark(next: boolean) {
+      matches = next;
+      const event = { matches: next, media: this.media } as MediaQueryListEvent;
+      listeners.forEach((listener) => listener(event));
+    },
+  } as MediaQueryList & { setDark: (next: boolean) => void };
+  vi.stubGlobal("matchMedia", vi.fn(() => media));
+  return media;
 }
 
 beforeEach(() => {
@@ -251,6 +277,87 @@ describe("configuration", () => {
   });
 });
 
+describe("theme modes", () => {
+  it("AT-001 (REQ-001, REQ-005, REQ-008): offers Light, Dark and System with System selected by default", () => {
+    renderApp();
+    for (const name of ["Light", "Dark", "System"]) {
+      expect(screen.getByRole("radio", { name })).toBeInTheDocument();
+    }
+    expect(screen.getByRole("radio", { name: "System" })).toBeChecked();
+    expect(document.documentElement).toHaveAttribute("data-theme", "light");
+  });
+
+  it("AT-002 (REQ-002, REQ-006, REQ-011): applies and persists Dark without changing the running timer or settings", () => {
+    renderApp();
+    fireEvent.click(start());
+    advance(3000);
+    fireEvent.click(screen.getByRole("radio", { name: "Dark" }));
+
+    expect(document.documentElement).toHaveAttribute("data-theme", "dark");
+    expect(screen.getByRole("radio", { name: "Dark" })).toBeChecked();
+    expect(time()).toHaveTextContent("24:57");
+    expect(pause()).toBeInTheDocument();
+    expect(field(/Focus duration/)).toHaveValue("25");
+    expect(window.localStorage.getItem(THEME_STORAGE_KEY)).toBe("dark");
+    expect(document.querySelector('meta[name="theme-color"]')).toHaveAttribute("content", "#121212");
+  });
+
+  it("AT-003/004 (REQ-003, REQ-004): System follows the current and changing OS preference", () => {
+    const media = mockColorScheme(true);
+    renderApp();
+    expect(document.documentElement).toHaveAttribute("data-theme", "dark");
+    expect(screen.getByRole("radio", { name: "System" })).toBeChecked();
+
+    act(() => media.setDark(false));
+    expect(document.documentElement).toHaveAttribute("data-theme", "light");
+    expect(document.querySelector('meta[name="theme-color"]')).toHaveAttribute("content", "#ffffff");
+
+    fireEvent.click(screen.getByRole("radio", { name: "Light" }));
+    act(() => media.setDark(true));
+    expect(document.documentElement).toHaveAttribute("data-theme", "light");
+  });
+
+  it.each(["invalid", "unavailable"])("AT-006 (REQ-008): %s theme storage falls back to System", (storageState) => {
+    const media = mockColorScheme(true);
+    if (storageState === "invalid") {
+      window.localStorage.setItem(THEME_STORAGE_KEY, "sepia");
+    } else {
+      vi.spyOn(Storage.prototype, "getItem").mockImplementation(() => {
+        throw new Error("denied");
+      });
+    }
+    renderApp();
+    expect(screen.getByRole("radio", { name: "System" })).toBeChecked();
+    expect(document.documentElement).toHaveAttribute("data-theme", "dark");
+    expect(media.matches).toBe(true);
+  });
+
+  it("AT-005 (REQ-006, REQ-007): restores the selected mode after a reload", () => {
+    const first = renderApp();
+    fireEvent.click(screen.getByRole("radio", { name: "Dark" }));
+    first.unmount();
+    renderApp();
+    expect(screen.getByRole("radio", { name: "Dark" })).toBeChecked();
+    expect(document.documentElement).toHaveAttribute("data-theme", "dark");
+  });
+
+  it("AT-009 (REQ-012, REQ-014): arrow keys select modes without moving focus", async () => {
+    vi.useRealTimers();
+    const user = userEvent.setup();
+    renderApp();
+    for (let i = 0; i < 7; i++) await user.tab();
+
+    const system = screen.getByRole("radio", { name: "System" });
+    expect(system).toHaveFocus();
+    await user.keyboard("{ArrowLeft}");
+    expect(screen.getByRole("radio", { name: "Dark" })).toBeChecked();
+    expect(screen.getByRole("radio", { name: "Dark" })).toHaveFocus();
+    await user.keyboard("{ArrowLeft}");
+    expect(screen.getByRole("radio", { name: "Light" })).toBeChecked();
+    expect(screen.getByRole("radio", { name: "Light" })).toHaveFocus();
+  });
+});
+
 describe("notifications", () => {
   class FakeNotification {
     static permission: NotificationPermission = "default";
@@ -379,17 +486,18 @@ describe("keyboard and labels", () => {
     expect(start()).toBeInTheDocument();
     await user.tab();
     expect(reset()).toHaveFocus();
-    const expected = [
-      /Focus duration/,
-      /Short break duration/,
-      /Long break duration/,
-      /before a long break/,
-      /system notifications/,
-      /Play a sound/,
+    const expected: [ "textbox" | "radio" | "checkbox", RegExp ][] = [
+      ["textbox", /Focus duration/],
+      ["textbox", /Short break duration/],
+      ["textbox", /Long break duration/],
+      ["textbox", /before a long break/],
+      ["radio", /System/],
+      ["checkbox", /system notifications/],
+      ["checkbox", /Play a sound/],
     ];
-    for (const name of expected) {
+    for (const [role, name] of expected) {
       await user.tab();
-      expect(screen.getByRole(name.source.includes("system") || name.source.includes("sound") ? "checkbox" : "textbox", { name })).toHaveFocus();
+      expect(screen.getByRole(role, { name })).toHaveFocus();
     }
     // session type is text, not colour alone
     const timer = screen.getByRole("region", { name: "Timer" });

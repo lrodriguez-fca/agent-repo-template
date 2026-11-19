@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
-import { useSessionEnd, useTimer } from "../hooks";
+import { useSessionEnd, useTheme, useTimer } from "../hooks";
 import { SettingsForm } from "../components/SettingsForm";
+import { ThemeControl } from "../components/ThemeControl";
 import { formatTime, SESSION_LABEL } from "../lib/timer";
 import { endMessage, notificationsSupported, requestNotificationPermission, showSystemNotification } from "../lib/notify";
 import { playAlert, primeAudio } from "../lib/sound";
@@ -9,6 +10,7 @@ const BASE_TITLE = "Pomodoro";
 
 export function PomodoroPage() {
   const { state, start, pause, reset, applySettings } = useTimer();
+  const { mode, selectMode } = useTheme();
   const [message, setMessage] = useState("");
   const [soundOn, setSoundOn] = useState(false);
   const [notifyOn, setNotifyOn] = useState(false);
@@ -96,6 +98,7 @@ export function PomodoroPage() {
       </section>
 
       <SettingsForm settings={state.settings} onChange={applySettings} />
+      <ThemeControl mode={mode} onChange={selectMode} />
 
       <fieldset className="settings">
         <legend>Alerts</legend>
