@@ -2,7 +2,7 @@ name: ci
 on:
   pull_request:
   push:
-    branches: [main]
+    branches: [main, master]
 permissions:
   contents: read
 jobs:
@@ -10,8 +10,16 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      # TODO: set up your language toolchain, then run install/lint/test with coverage
-      - run: echo "replace with test + coverage commands"
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npm run lint
+      - run: npm run coverage
+      - run: npm run build
+      - run: npx playwright install --with-deps chromium
+      - run: npm run test:e2e
   dependency-review:
     if: github.event_name == 'pull_request'
     runs-on: ubuntu-latest
