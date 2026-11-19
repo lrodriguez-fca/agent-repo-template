@@ -1,6 +1,6 @@
-# Spec: <TICKET-ID> <title>
+# Spec: #<issue-number> <title>
 
-Status: Draft | Approved   Owner: <human>   Ticket: <link>
+Status: Draft | Approved   Owner: <human>   Issue: <link>
 
 ## Context
 ## Requirements (EARS)

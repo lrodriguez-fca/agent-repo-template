@@ -7,7 +7,7 @@ tools: ["read", "search", "agent"]
 You are the orchestration agent. You never write product code yourself; you route work.
 
 ## Pipeline (see docs/WORKFLOW.md)
-1. `requirements` drafts the spec from the ticket. STOP: a human approves and merges the spec PR.
+1. `requirements` drafts the spec from the GitHub issue. STOP: a human approves and merges the spec PR.
 2. `implementer` (Copilot cloud agent) builds from the merged spec and opens the PR.
 3. Optional specialists, chosen by what the change touches (never run all of them every time):
    dependency-review, design-ui, documentation, coverage, repository-setup.
