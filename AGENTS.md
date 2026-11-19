@@ -1,10 +1,13 @@
 # AGENTS.md
 
 ## Project
-<!-- TODO: describe the product, stack, and how to build/test/run -->
-- Install: `TODO`
-- Test: `TODO`
-- Lint: `TODO`
+Pomodoro timer (spec: `docs/specs/2.md`). Client-only SPA: React + React Router (library/data mode, no SSR),
+Vite, TypeScript, Vitest + Testing Library (unit/component, axe), Playwright + axe (browser a11y/layout).
+- Install: `npm ci` (then `npx playwright install chromium` once for e2e)
+- Test: `npm test` (unit/component); `npm run coverage`; `npm run test:e2e` (builds, serves, runs Playwright)
+- Lint: `npm run lint` (ESLint + `tsc --noEmit`)
+- Build / run: `npm run build`, `npm run dev`
+- Tests reference requirement IDs (`REQ-###`) and acceptance test IDs (`AT-###`) in their names.
 
 ## Conventions
 - Spec-driven: no feature code without a merged spec in `docs/specs/`.

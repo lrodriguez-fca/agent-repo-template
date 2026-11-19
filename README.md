@@ -18,3 +18,17 @@ MCP connections are commented out until needed).
 
 Tip: to share agents org-wide with zero setup, copy `.github/agents/` into your org's `.github` repo.
 Skills in `.github/skills/` carry reusable standards.
+
+## Pomodoro app (spec `docs/specs/2.md`)
+A keyboard-accessible Pomodoro timer: Focus / Short break / Long break, configurable durations
+(1–120 min) and long-break interval (1–10), in-page + optional system notifications, optional sound.
+Only settings are stored (localStorage); a running timer does not survive a reload.
+
+```
+npm ci                      # install
+npm run dev                 # dev server
+npm run lint                # ESLint + type-check
+npm test                    # Vitest unit/component tests (AT-001..AT-019)
+npm run test:e2e            # Playwright + axe (needs: npx playwright install chromium)
+npm run build               # production build in dist/ (adds a restrictive CSP)
+```
