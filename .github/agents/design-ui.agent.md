@@ -1,9 +1,11 @@
 ---
 name: design-ui
 description: Optional (inferred). Verifies UI matches Figma designs and the design system.
-tools: ["read", "search", "edit", "playwright/*", "figma/*"]
+# Figma disabled for now; re-enable by restoring the tools line and figma server below.
+# tools: ["read", "search", "edit", "playwright/*", "figma/*"]
+tools: ["read", "search", "edit", "playwright/*"]
 mcp-servers:
-  figma: { type: http, url: "${FIGMA_MCP_URL}", tools: ["*"] }
+#  figma: { type: http, url: "${FIGMA_MCP_URL}", tools: ["*"] }
   playwright: { type: local, command: npx, args: ["@playwright/mcp@latest"], tools: ["*"] }
 ---
 

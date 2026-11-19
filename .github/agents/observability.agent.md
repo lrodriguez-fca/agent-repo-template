@@ -1,9 +1,11 @@
 ---
 name: observability
 description: Instruments code and investigates telemetry using New Relic so every change ships with full visibility.
-tools: ["read", "search", "edit", "execute", "newrelic/*"]
-mcp-servers:
-  newrelic: { type: http, url: "${NEWRELIC_MCP_URL}", headers: { "Api-Key": "${NEWRELIC_API_KEY}" }, tools: ["*"] }
+# New Relic disabled for now; re-enable by restoring the line below and the mcp-servers block.
+# tools: ["read", "search", "edit", "execute", "newrelic/*"]
+# mcp-servers:
+#   newrelic: { type: http, url: "${NEWRELIC_MCP_URL}", headers: { "Api-Key": "${NEWRELIC_API_KEY}" }, tools: ["*"] }
+tools: ["read", "search", "edit", "execute"]
 ---
 
 **Output:** `feat(observability):` commits + coverage summary.
